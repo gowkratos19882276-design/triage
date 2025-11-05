@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 210 20% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 20% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 20% 12%;
+
+    --primary: 197 71% 52%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 198 65% 88%;
+    --secondary-foreground: 197 71% 25%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 169 58% 48%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 197 71% 52%;
+
+    --radius: 0.75rem;
+
+    --medical-blue: 197 71% 52%;
+    --medical-teal: 169 58% 48%;
+    --medical-light: 198 65% 95%;
+    --medical-accent: 198 65% 88%;
+    
+    --success: 142 71% 45%;
+    --warning: 38 92% 50%;
+    --info: 197 71% 52%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(197 71% 52%), hsl(169 58% 48%));
+    --gradient-subtle: linear-gradient(180deg, hsl(198 65% 98%), hsl(198 65% 95%));
+    
+    --shadow-soft: 0 2px 8px hsl(197 71% 52% / 0.08);
+    --shadow-md: 0 4px 16px hsl(197 71% 52% / 0.12);
+    --shadow-lg: 0 8px 24px hsl(197 71% 52% / 0.16);
+
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .dark {
+    --background: 210 30% 8%;
+    --foreground: 210 20% 98%;
+
+    --card: 210 25% 12%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 210 25% 12%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 197 71% 52%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 25% 20%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 210 25% 18%;
+    --muted-foreground: 215 16% 65%;
+
+    --accent: 169 58% 48%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 25% 20%;
+    --input: 210 25% 20%;
+    --ring: 197 71% 52%;
+
+    --medical-blue: 197 71% 52%;
+    --medical-teal: 169 58% 48%;
+    --medical-light: 210 25% 15%;
+    --medical-accent: 210 25% 20%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
