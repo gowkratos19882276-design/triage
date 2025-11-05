@@ -1,4 +1,4 @@
-**Smart Healthcare Nurse Triage Agent**
+**SMAART HEALTHCARE NURSE TRIAGE AGENT**
 
 Our Nurse Triage Agent is a friendly, always-available assistant that guides patients through a quick intake conversation. It asks simple, clear questions about symptoms and background, listens to your answers, and presents them in an easy-to-read summary. This helps clinics triage faster, reduce waiting time, and ensure the right information reaches the provider before the visit. Patients get a calm, conversational experience with real-time captions and a downloadable summary they can keep or share—making care more organized, efficient, and reassuring.
 
