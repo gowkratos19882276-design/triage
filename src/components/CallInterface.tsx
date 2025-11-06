@@ -5,6 +5,7 @@ import { Phone, PhoneOff, Mic, MicOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Vapi from '@vapi-ai/web';
 import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -172,9 +173,20 @@ const CallInterface = () => {
   };
 
   const extractSummary = (text: string): string => {
-    // Extract summary from conversation
-    const summaryMatch = text.match(/Patient Intake Summary:([\s\S]*?)(?=\n\n|$)/);
-    return summaryMatch ? summaryMatch[1].trim() : text.slice(-500);
+    // Normalize newlines
+    const cleaned = (text || '').replace(/\r/g, '');
+    // Prefer an explicit "Summary:" block
+    const m1 = cleaned.match(/Summary:\s*([\s\S]*?)(?=\n{2,}|$)/i);
+    if (m1 && m1[1]) return m1[1].trim();
+    // Or a "Patient Intake Summary:" block
+    const m2 = cleaned.match(/Patient Intake Summary:\s*([\s\S]*?)(?=\n{2,}|$)/i);
+    if (m2 && m2[1]) return m2[1].trim();
+    // Fallback: last N lines, stripped of role prefixes
+    const lines = cleaned
+      .split(/\n/)
+      .map(l => l.replace(/^\s*(assistant|user)\s*:\s*/i, '').trim())
+      .filter(Boolean);
+    return lines.slice(-12).join(' ');
   };
 
   const extractPatientInfo = (text: string): any => {
@@ -231,7 +243,7 @@ const CallInterface = () => {
     };
   };
 
-  const downloadSummaryPdf = () => {
+  const downloadSummaryPdf = async () => {
     const text = transcriptRef.current || messages.map(m => `${m.role}: ${m.content}`).join('\n');
     if (!text || text.trim().length === 0) {
       toast({ title: 'No Transcript', description: 'There is no transcript to export yet.' });
@@ -239,28 +251,79 @@ const CallInterface = () => {
     }
     const summary = extractSummary(text);
     const info = extractPatientInfo(text);
+
     const doc = new jsPDF();
+
+    let cursorY = 15;
+
+    try {
+      const toDataUrl = async (url: string) => {
+        const res = await fetch(url, { cache: 'no-store' });
+        const blob = await res.blob();
+        return await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      };
+      const logoDataUrl = await toDataUrl('/image.png');
+      // Load into Image to get natural dimensions
+      const img = new Image();
+      const imgLoaded = await new Promise<HTMLImageElement>((resolve) => {
+        img.onload = () => resolve(img);
+        img.src = logoDataUrl;
+      });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const maxW = 50; // mm
+      const maxH = 20; // mm
+      const ratio = Math.min(maxW / imgLoaded.width, maxH / imgLoaded.height);
+      const w = Math.max(20, imgLoaded.width * ratio);
+      const h = imgLoaded.height * ratio;
+      const x = (pageWidth - w) / 2;
+      doc.addImage(logoDataUrl, 'PNG', x, cursorY, w, h);
+      cursorY += h + 8;
+    } catch {}
+
     doc.setFontSize(16);
-    doc.text('Patient Intake Summary', 14, 20);
+    doc.text('Patient Intake Summary', 14, cursorY);
+    cursorY += 10;
+
+    const tableBody = [
+      ['Name', info.name || ''],
+      ['Age', info.age || ''],
+      ['Gender', info.gender || ''],
+      ['Symptoms', info.symptoms || ''],
+    ];
+
+    (doc as any).autoTable({
+      head: [['Field', 'Value']],
+      body: tableBody,
+      startY: cursorY,
+      styles: { fontSize: 11 },
+      headStyles: { fillColor: [240, 240, 240] },
+      columnStyles: {
+        0: { cellWidth: 40 },
+        1: { cellWidth: 'auto' },
+      },
+      margin: { left: 14, right: 14 },
+    });
+
+    // After table, add summary paragraph
+    // @ts-ignore - autoTable provides lastAutoTable
+    const afterTableY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : cursorY + 40;
     doc.setFontSize(12);
-    const lines: string[] = [];
-    lines.push(`Name: ${info.name || ''}`);
-    lines.push(`Age: ${info.age || ''}`);
-    lines.push(`Gender: ${info.gender || ''}`);
-    lines.push(`Symptoms: ${info.symptoms || ''}`);
-    lines.push('');
-    lines.push('Summary:');
-    const wrapped = doc.splitTextToSize(summary || '', 180);
-    lines.push(...wrapped);
-    let y = 30;
-    lines.forEach((l) => {
-      if (y > 280) {
+    doc.text('Summary:', 14, afterTableY);
+    const wrapped = doc.splitTextToSize((summary && summary.toLowerCase() !== 'null' ? summary : 'No summary provided.'), 180);
+    let y = afterTableY + 7;
+    wrapped.forEach((line: string) => {
+      if (y > doc.internal.pageSize.getHeight() - 20) {
         doc.addPage();
         y = 20;
       }
-      doc.text(l, 14, y);
+      doc.text(line, 14, y);
       y += 7;
     });
+
     doc.save('patient-summary.pdf');
   };
 
